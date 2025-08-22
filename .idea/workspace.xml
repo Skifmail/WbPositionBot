@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="247da58c-d540-4f42-8ecd-30a7abc400b4" name="Changes" comment="Подготовлен к деплою">
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/db/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/db/base.py" afterDir="false" />
-    </list>
+    <list default="true" id="247da58c-d540-4f42-8ecd-30a7abc400b4" name="Changes" comment="Исправлено подключение к базе данных" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -135,11 +130,28 @@
       <option name="project" value="LOCAL" />
       <updated>1755861852414</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Подготовлен к деплою">
+      <option name="closed" value="true" />
+      <created>1755865610607</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1755865610607</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Исправлено подключение к базе данных">
+      <option name="closed" value="true" />
+      <created>1755865875891</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1755865875891</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Подготовлен к деплою" />
-    <option name="LAST_COMMIT_MESSAGE" value="Подготовлен к деплою" />
+    <MESSAGE value="Исправлено подключение к базе данных" />
+    <option name="LAST_COMMIT_MESSAGE" value="Исправлено подключение к базе данных" />
   </component>
 </project>
