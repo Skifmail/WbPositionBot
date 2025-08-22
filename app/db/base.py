@@ -5,15 +5,25 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import text
 
 from app.config import settings
 
 
+def _normalize_async_url(url: str) -> str:
+	# Convert postgres:// to postgresql:// and enforce asyncpg driver
+	orig = url
+	if url.startswith("postgres://"):
+		url = "postgresql://" + url[len("postgres://"):]
+	if url.startswith("postgresql://") and "+asyncpg" not in url:
+		url = "postgresql+asyncpg://" + url[len("postgresql://"):]
+	return url
+
+
 Base = declarative_base()
 if not settings.database_url:
-	raise RuntimeError("DATABASE_URL не задан. Установите переменную окружения или настройте Render DATABASE_URL.")
-engine = create_async_engine(settings.database_url, echo=False, pool_pre_ping=True)
+	raise RuntimeError("DATABASE_URL не задан. Установите переменную окружения или настройте Render/Neon DATABASE_URL.")
+_async_db_url = _normalize_async_url(settings.database_url)
+engine = create_async_engine(_async_db_url, echo=False, pool_pre_ping=True)
 async_session_factory = async_sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
 
 
@@ -27,7 +37,7 @@ async def init_db() -> None:
 	from app.db import models  # noqa: F401  # ensure models are imported
 	async with engine.begin() as conn:
 		# create schema wbpos if not exists
-		await conn.execute(text("CREATE SCHEMA IF NOT EXISTS wbpos"))
+		await conn.execute("CREATE SCHEMA IF NOT EXISTS wbpos")
 		await conn.run_sync(Base.metadata.create_all)
 
 
