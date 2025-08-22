@@ -16,15 +16,18 @@ def _normalize_async_url(url: str) -> str:
 		url = "postgresql://" + url[len("postgres://"):]
 	if url.startswith("postgresql://") and "+asyncpg" not in url:
 		url = "postgresql+asyncpg://" + url[len("postgresql://"):]
-	# Rewrite sslmode=require -> ssl=true for asyncpg
+	# Rewrite/strip params incompatible with asyncpg
 	parts = urlparse(url)
 	qs = dict(parse_qsl(parts.query, keep_blank_values=True))
+	# Map sslmode=require -> ssl=true
 	if "sslmode" in qs:
-		# asyncpg expects 'ssl' flag; map require/require* to true
 		if qs.get("sslmode", "").lower() in {"require", "required", "verify-full", "verify_ca", "verify-full"}:
 			qs["ssl"] = "true"
 		qs.pop("sslmode", None)
-	# Some providers include 'sslmode=require' implicitly; for neon host enforce ssl=true if not set
+	# Drop psycopg/psql-specific params
+	for key in ["channel_binding", "target_session_attrs"]:
+		qs.pop(key, None)
+	# For Neon ensure ssl=true
 	if parts.hostname and parts.hostname.endswith("neon.tech") and "ssl" not in qs:
 		qs["ssl"] = "true"
 	new_query = urlencode(qs)
@@ -49,7 +52,6 @@ async def init_db() -> None:
 	"""Create database schema if not exists."""
 	from app.db import models  # noqa: F401  # ensure models are imported
 	async with engine.begin() as conn:
-		# create schema wbpos if not exists
 		await conn.execute("CREATE SCHEMA IF NOT EXISTS wbpos")
 		await conn.run_sync(Base.metadata.create_all)
 
