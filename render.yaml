@@ -8,13 +8,10 @@ services:
       - key: TELEGRAM_TOKEN
         sync: false
       - key: DATABASE_URL
-        fromDatabase:
-          name: wb-bot-db
-          property: connectionString
+        sync: false
       - key: SCHEDULER_ENABLED
-        value: true
+        value: "true"
+      - key: TRACKING_INTERVAL_MINUTES
+        value: "10"
       - key: DEFAULT_DEVICE
         value: pc
-
-databases:
-  - name: wb-bot-db

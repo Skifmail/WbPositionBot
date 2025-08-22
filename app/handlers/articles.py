@@ -27,18 +27,29 @@ def _articles_menu_kb(articles: list[Article]) -> InlineKeyboardBuilder:
 	return kb
 
 
+async def _ensure_user_by_id(telegram_id: int) -> User:
+	async with async_session_factory() as session:
+		user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+		if user is None:
+			user = User(telegram_id=telegram_id)
+			session.add(user)
+			await session.commit()
+			await session.refresh(user)
+		return user
+
+
 @router.message(F.text == "Артикулы")
 async def open_articles_by_text(message: Message) -> None:
+	user = await _ensure_user_by_id(message.from_user.id)
 	async with async_session_factory() as session:
-		user = await session.scalar(select(User).where(User.telegram_id == message.from_user.id))
 		articles = list((await session.scalars(select(Article).where(Article.user_id == user.id))).all())
 	await message.answer("Управление артикулами:", reply_markup=_articles_menu_kb(articles).as_markup())
 
 
 @router.callback_query(F.data == "menu:articles")
 async def open_articles(cb: CallbackQuery) -> None:
+	user = await _ensure_user_by_id(cb.from_user.id)
 	async with async_session_factory() as session:
-		user = await session.scalar(select(User).where(User.telegram_id == cb.from_user.id))
 		articles = list((await session.scalars(select(Article).where(Article.user_id == user.id))).all())
 	await cb.message.edit_text("Управление артикулами:", reply_markup=_articles_menu_kb(articles).as_markup())
 	await cb.answer()

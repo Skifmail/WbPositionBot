@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="247da58c-d540-4f42-8ecd-30a7abc400b4" name="Changes" comment="Исправлено подключение к базе данных" />
+    <list default="true" id="247da58c-d540-4f42-8ecd-30a7abc400b4" name="Changes" comment="Исправлено подключение к базе данных">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/articles.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/handlers/articles.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -170,7 +173,23 @@
       <option name="project" value="LOCAL" />
       <updated>1755867264030</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Исправлено подключение к базе данных">
+      <option name="closed" value="true" />
+      <created>1755867539465</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1755867539465</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Исправлено подключение к базе данных">
+      <option name="closed" value="true" />
+      <created>1755867868963</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1755867868963</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
