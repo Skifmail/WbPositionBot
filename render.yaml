@@ -1,5 +1,5 @@
 services:
-  - type: worker
+  - type: web
     name: wbpositionbot
     env: python
     buildCommand: pip install -r requirements.txt
@@ -8,6 +8,10 @@ services:
       - key: TELEGRAM_TOKEN
         sync: false
       - key: DATABASE_URL
+        sync: false
+      - key: WEBHOOK_URL
+        sync: false
+      - key: WEBHOOK_SECRET
         sync: false
       - key: SCHEDULER_ENABLED
         value: "true"
