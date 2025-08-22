@@ -23,15 +23,18 @@ def _normalize_async_url(url: str) -> str:
 	parts = urlparse(url)
 	qs = dict(parse_qsl(parts.query, keep_blank_values=True))
 	# Drop unsupported/psql-specific params
-	for key in ["channel_binding", "target_session_attrs", "ssl"]:
+	for key in ["channel_binding", "target_session_attrs"]:
 		qs.pop(key, None)
-	# Enforce sslmode=require (Neon requires TLS). Fix invalid values.
+	# Map sslmode -> ssl (asyncpg expects 'ssl')
+	sslmode = qs.pop("sslmode", None)
+	if sslmode:
+		val = str(sslmode).lower()
+		if val in _ALLOWED_SSLMODE:
+			qs["ssl"] = val
+	# For Neon ensure ssl=require if not set
 	host = parts.hostname or ""
-	if "sslmode" not in qs or qs.get("sslmode", "").lower() not in _ALLOWED_SSLMODE:
-		qs["sslmode"] = "require"
-	# Neon host: ensure require
-	if host.endswith("neon.tech"):
-		qs["sslmode"] = "require"
+	if host.endswith("neon.tech") and "ssl" not in qs:
+		qs["ssl"] = "require"
 	new_query = urlencode(qs)
 	return urlunparse((parts.scheme, parts.netloc, parts.path, parts.params, new_query, parts.fragment))
 
