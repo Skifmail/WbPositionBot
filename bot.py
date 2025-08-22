@@ -1,6 +1,9 @@
 import asyncio
 from functools import partial
 from urllib.parse import urlparse
+import re
+import secrets
+import string
 
 from aiohttp import web
 from loguru import logger
@@ -18,6 +21,24 @@ from app.handlers.settings import router as settings_router
 from app.handlers.manual_check import router as manual_router
 from app.handlers.tracking import router as tracking_router
 from app.scheduler import setup_scheduler, shutdown_scheduler
+
+
+_ALLOWED_SECRET_RE = re.compile(r"^[A-Za-z0-9_-]{1,256}$")
+_ALLOWED_SECRET_CHARS = string.ascii_letters + string.digits + "_-"
+
+
+def _normalize_secret_token(raw_secret: str | None) -> str | None:
+	"""Validate Telegram webhook secret token; generate a safe one if invalid.
+
+	Telegram allows only A–Z, a–z, 0–9, '_' and '-' and length 1..256.
+	Returns None if no secret provided.
+	"""
+	if not raw_secret:
+		return None
+	if _ALLOWED_SECRET_RE.match(raw_secret):
+		return raw_secret
+	logger.warning("WEBHOOK_SECRET содержит недопустимые символы. Будет сгенерирован безопасный токен.")
+	return "".join(secrets.choice(_ALLOWED_SECRET_CHARS) for _ in range(48))
 
 
 def build_dispatcher() -> Dispatcher:
@@ -54,13 +75,13 @@ async def start_polling_mode() -> None:
 		logger.info("Bot stopped")
 
 
-async def on_startup(app: web.Application, bot: Bot, dp: Dispatcher) -> None:
+async def on_startup(app: web.Application, bot: Bot, dp: Dispatcher, secret_token: str | None) -> None:
 	await init_db()
 	if settings.scheduler_enabled:
 		await setup_scheduler(bot)
 	if not settings.webhook_url:
 		raise RuntimeError("WEBHOOK_URL не задан")
-	await bot.set_webhook(url=settings.webhook_url, secret_token=settings.webhook_secret or None, drop_pending_updates=True)
+	await bot.set_webhook(url=settings.webhook_url, secret_token=secret_token, drop_pending_updates=True)
 	logger.info("Webhook set: {}", settings.webhook_url)
 
 
@@ -90,10 +111,11 @@ def run_webhook_server() -> None:
 	app = web.Application()
 	# Determine webhook path from WEBHOOK_URL
 	path = urlparse(settings.webhook_url or "/webhook").path or "/webhook"
-	handler = SimpleRequestHandler(dispatcher=dp, bot=bot, secret_token=settings.webhook_secret or None)
+	secret_token = _normalize_secret_token(settings.webhook_secret)
+	handler = SimpleRequestHandler(dispatcher=dp, bot=bot, secret_token=secret_token)
 	handler.register(app, path)
 	app.router.add_get("/health", healthcheck)
-	app.on_startup.append(partial(on_startup, bot=bot, dp=dp))
+	app.on_startup.append(partial(on_startup, bot=bot, dp=dp, secret_token=secret_token))
 	app.on_cleanup.append(partial(on_cleanup, bot=bot))
 	logger.info("Starting webhook server on {}:{} (path: {})", settings.app_host, settings.app_port, path)
 	web.run_app(app, host=settings.app_host, port=settings.app_port)
