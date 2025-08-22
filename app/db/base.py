@@ -6,6 +6,7 @@ from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
+from sqlalchemy import text
 
 from app.config import settings
 
@@ -56,7 +57,7 @@ async def init_db() -> None:
 	"""Create database schema if not exists."""
 	from app.db import models  # noqa: F401  # ensure models are imported
 	async with engine.begin() as conn:
-		await conn.execute("CREATE SCHEMA IF NOT EXISTS wbpos")
+		await conn.execute(text("CREATE SCHEMA IF NOT EXISTS wbpos"))
 		await conn.run_sync(Base.metadata.create_all)
 
 
