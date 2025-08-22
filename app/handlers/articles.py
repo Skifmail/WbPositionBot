@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.db.base import async_session_factory
 from app.db.models import User, Article
 from app.services.wb_client import WBClient
-from app.states import AddArticle
+from app.states import AddArticle, AddTracking
 
 router = Router()
 
@@ -18,11 +18,11 @@ router = Router()
 def _articles_menu_kb(articles: list[Article]) -> InlineKeyboardBuilder:
 	kb = InlineKeyboardBuilder()
 	for a in articles:
-		kb.button(text=f"{a.sku}", callback_data=f"article:{a.id}")
-	kb.button(text="Добавить", callback_data="article:add")
-	kb.button(text="Удалить", callback_data="article:delete")
-	kb.button(text="Все позиции", callback_data="article:check_all")
-	kb.button(text="Назад", callback_data="menu:back")
+		kb.button(text=f"📦 {a.sku}", callback_data=f"article:{a.id}")
+	kb.button(text="➕ Добавить", callback_data="article:add")
+	kb.button(text="🗑️ Удалить", callback_data="article:delete")
+	kb.button(text="🧾 Все позиции", callback_data="article:check_all")
+	kb.button(text="⬅️ Назад", callback_data="menu:back")
 	kb.adjust(2, 2, 1, 1)
 	return kb
 
@@ -72,10 +72,15 @@ async def add_article_by_text(message: Message, state: FSMContext) -> None:
 			await message.answer("Такой артикул уже добавлен.")
 			await state.clear()
 			return
-		session.add(Article(user_id=user.id, sku=sku))
+		article = Article(user_id=user.id, sku=sku)
+		session.add(article)
+		await session.flush()
+		await session.refresh(article)
 		await session.commit()
-	await state.clear()
-	await message.answer("Артикул добавлен. Откройте его и добавьте фразы.")
+	# сразу просим фразы и пороги
+	await state.set_state(AddTracking.waiting_for_phrase)
+	await state.update_data(article_id=article.id)
+	await message.answer("✅ Артикул добавлен. Теперь введите фразу(ы) для отслеживания. Можно несколько: через запятую или с новой строки.\nМожно сразу задать порог: 'фраза=число'.")
 
 
 @router.callback_query(F.data == "article:delete")
@@ -85,8 +90,8 @@ async def ask_delete_article(cb: CallbackQuery) -> None:
 		articles = list((await session.scalars(select(Article).where(Article.user_id == user.id))).all())
 		kb = InlineKeyboardBuilder()
 		for a in articles:
-			kb.button(text=str(a.sku), callback_data=f"article:del:{a.id}")
-		kb.button(text="Назад", callback_data="menu:articles")
+			kb.button(text=f"📦 {a.sku}", callback_data=f"article:del:{a.id}")
+		kb.button(text="⬅️ Назад", callback_data="menu:articles")
 		kb.adjust(2)
 	await cb.message.edit_text("Выберите артикул для удаления:", reply_markup=kb.as_markup())
 	await cb.answer()
@@ -107,10 +112,10 @@ async def delete_article(cb: CallbackQuery) -> None:
 
 def _article_kb(article_id: int) -> InlineKeyboardBuilder:
 	kb = InlineKeyboardBuilder()
-	kb.button(text="Добавить фразу", callback_data=f"tracking:add:{article_id}")
-	kb.button(text="Фразы/пороги", callback_data=f"tracking:list:{article_id}")
-	kb.button(text="Проверить", callback_data=f"tracking:check:{article_id}")
-	kb.button(text="Назад", callback_data="menu:articles")
+	kb.button(text="➕ Добавить фразу", callback_data=f"tracking:add:{article_id}")
+	kb.button(text="📝 Фразы/пороги", callback_data=f"tracking:list:{article_id}")
+	kb.button(text="🔎 Проверить", callback_data=f"tracking:check:{article_id}")
+	kb.button(text="⬅️ Назад", callback_data="menu:articles")
 	kb.adjust(1)
 	return kb
 

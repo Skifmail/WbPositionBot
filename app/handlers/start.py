@@ -14,18 +14,18 @@ router = Router()
 
 def _main_menu_kb() -> InlineKeyboardBuilder:
 	kb = InlineKeyboardBuilder()
-	kb.button(text="Артикулы", callback_data="menu:articles")
-	kb.button(text="Проверить позиции", callback_data="menu:manual_check")
-	kb.button(text="Настройки", callback_data="menu:settings")
+	kb.button(text="📦 Артикулы", callback_data="menu:articles")
+	kb.button(text="🔎 Проверить позиции", callback_data="menu:manual_check")
+	kb.button(text="⚙️ Настройки", callback_data="menu:settings")
 	kb.adjust(1)
 	return kb
 
 
 def main_reply_kb():
 	kb = ReplyKeyboardBuilder()
-	kb.button(text="Артикулы")
-	kb.button(text="Проверить позиции")
-	kb.button(text="Настройки")
+	kb.button(text="📦 Артикулы")
+	kb.button(text="🔎 Проверить позиции")
+	kb.button(text="⚙️ Настройки")
 	kb.adjust(2, 1)
 	return kb.as_markup(resize_keyboard=True, is_persistent=True)
 
@@ -42,13 +42,17 @@ async def _ensure_user(telegram_id: int) -> None:
 
 def _info_text(*, auto_update_enabled: bool, region: str, device: str, articles_count: int) -> str:
 	aut = "Включено" if auto_update_enabled else "Отключено"
-	return (
-		"<b>WB Position Bot</b>\n\n"
-		f"Автообновление: <b>{aut}</b>\n"
-		f"Регион: <b>{region or 'Не выбран'}</b>\n"
-		f"Устройство: <b>{device}</b>\n"
-		f"Отслеживаемых артикулов: <b>{articles_count}</b>\n"
-	)
+	lines = [
+		"<b>WB Position Bot</b>",
+		"",
+		f"Автообновление: <b>{aut}</b>",
+		f"Регион: <b>{region or 'Не выбран'}</b>",
+		f"Устройство: <b>{device}</b>",
+		f"Отслеживаемых артикулов: <b>{articles_count}</b>",
+	]
+	if not region:
+		lines.append("\n⚠️ Рекомендуем настроить регион и устройство в разделе <b>⚙️ Настройки</b> перед проверкой позиций.")
+	return "\n".join(lines)
 
 
 @router.message(CommandStart())

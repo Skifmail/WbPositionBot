@@ -13,6 +13,8 @@ services:
         sync: false
       - key: WEBHOOK_SECRET
         sync: false
+      - key: CRON_SECRET
+        sync: false
       - key: SCHEDULER_ENABLED
         value: "true"
       - key: TRACKING_INTERVAL_MINUTES

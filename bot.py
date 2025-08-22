@@ -21,6 +21,7 @@ from app.handlers.settings import router as settings_router
 from app.handlers.manual_check import router as manual_router
 from app.handlers.tracking import router as tracking_router
 from app.scheduler import setup_scheduler, shutdown_scheduler
+from app.services.tracker import run_hourly_tracking
 
 
 _ALLOWED_SECRET_RE = re.compile(r"^[A-Za-z0-9_-]{1,256}$")
@@ -102,6 +103,16 @@ def healthcheck(_: web.Request) -> web.Response:
 	return web.Response(text="ok")
 
 
+async def cron_handler(request: web.Request) -> web.Response:
+	secret = request.query.get("s")
+	if settings.cron_secret and secret != settings.cron_secret:
+		return web.Response(status=403, text="forbidden")
+	# run tracking immediately
+	bot: Bot = request.app["bot"]
+	asyncio.create_task(run_hourly_tracking(bot))
+	return web.Response(text="ok")
+
+
 def run_webhook_server() -> None:
 	logger.add("bot.log", rotation="10 MB")
 	if not settings.telegram_token:
@@ -114,7 +125,9 @@ def run_webhook_server() -> None:
 	secret_token = _normalize_secret_token(settings.webhook_secret)
 	handler = SimpleRequestHandler(dispatcher=dp, bot=bot, secret_token=secret_token)
 	handler.register(app, path)
+	app["bot"] = bot
 	app.router.add_get("/health", healthcheck)
+	app.router.add_get("/cron", cron_handler)
 	app.on_startup.append(partial(on_startup, bot=bot, dp=dp, secret_token=secret_token))
 	app.on_cleanup.append(partial(on_cleanup, bot=bot))
 	logger.info("Starting webhook server on {}:{} (path: {})", settings.app_host, settings.app_port, path)

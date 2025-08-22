@@ -65,6 +65,10 @@ async def process_user_trackings(session: AsyncSession, user: User, bot: Bot) ->
 						)
 						await _safe_send(bot, user.telegram_id, text)
 						tracking.last_notified_position = pos
+	# короткий статус после прохода
+	region = user.region_city or user.region_district or "Не выбран"
+	aut = "Включено" if user.auto_update_enabled else "Отключено"
+	await _safe_send(bot, user.telegram_id, text=f"🔁 Автообновление выполнилось. ⚙️ {user.device} | 🗺️ {region} | {aut}")
 
 
 async def run_hourly_tracking(bot: Bot) -> None:

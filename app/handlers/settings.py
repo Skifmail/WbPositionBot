@@ -14,10 +14,10 @@ router = Router()
 
 def _settings_kb(user: User) -> InlineKeyboardBuilder:
 	kb = InlineKeyboardBuilder()
-	kb.button(text=("Отключить автообновление" if user.auto_update_enabled else "Включить автообновление"), callback_data="settings:toggle_auto")
-	kb.button(text=f"Устройство: {user.device}", callback_data="settings:device")
-	kb.button(text=f"Регион", callback_data="settings:region")
-	kb.button(text="Назад", callback_data="menu:back")
+	kb.button(text=("⏸️ Отключить автообновление" if user.auto_update_enabled else "▶️ Включить автообновление"), callback_data="settings:toggle_auto")
+	kb.button(text=f"📱 Устройство: {user.device}", callback_data="settings:device")
+	kb.button(text=f"🗺️ Регион", callback_data="settings:region")
+	kb.button(text="⬅️ Назад", callback_data="menu:back")
 	kb.adjust(1)
 	return kb
 
@@ -46,12 +46,15 @@ async def toggle_auto(cb: CallbackQuery) -> None:
 	await open_settings(cb)
 
 
+device_emoji = {"pc": "🖥️", "android": "🤖", "ios": "🍎", "iphone": "📱", "tablet": "📲"}
+
+
 @router.callback_query(F.data == "settings:device")
 async def choose_device(cb: CallbackQuery) -> None:
 	kb = InlineKeyboardBuilder()
 	for d in ["pc", "android", "ios", "iphone", "tablet"]:
-		kb.button(text=d, callback_data=f"settings:device:{d}")
-	kb.button(text="Назад", callback_data="menu:settings")
+		kb.button(text=f"{device_emoji.get(d, '')} {d}", callback_data=f"settings:device:{d}")
+	kb.button(text="⬅️ Назад", callback_data="menu:settings")
 	kb.adjust(3, 2)
 	await cb.message.edit_text("Выберите устройство:", reply_markup=kb.as_markup())
 	await cb.answer()
@@ -71,8 +74,8 @@ async def set_device(cb: CallbackQuery) -> None:
 async def choose_district(cb: CallbackQuery) -> None:
 	kb = InlineKeyboardBuilder()
 	for district in DISTRICTS:
-		kb.button(text=district.name, callback_data=f"settings:district:{district.code}")
-	kb.button(text="Назад", callback_data="menu:settings")
+		kb.button(text=f"🗺️ {district.name}", callback_data=f"settings:district:{district.code}")
+	kb.button(text="⬅️ Назад", callback_data="menu:settings")
 	kb.adjust(1)
 	await cb.message.edit_text("Выберите федеральный округ:", reply_markup=kb.as_markup())
 	await cb.answer()
@@ -84,8 +87,8 @@ async def choose_city(cb: CallbackQuery) -> None:
 	district = next(d for d in DISTRICTS if d.code == district_code)
 	kb = InlineKeyboardBuilder()
 	for city in district.cities:
-		kb.button(text=city.name, callback_data=f"settings:city:{district.code}:{city.code}")
-	kb.button(text="Назад", callback_data="settings:region")
+		kb.button(text=f"🏙️ {city.name}", callback_data=f"settings:city:{district.code}:{city.code}")
+	kb.button(text="⬅️ Назад", callback_data="settings:region")
 	kb.adjust(1)
 	await cb.message.edit_text(f"Округ: {district.name}. Выберите город:", reply_markup=kb.as_markup())
 	await cb.answer()

@@ -19,6 +19,7 @@ class WBClient:
 		self._session: Optional[aiohttp.ClientSession] = None
 		self._preview_cache: dict[int, tuple[Optional[str], str, str, float]] = {}
 		self._image_cache: dict[int, tuple[bytes, float]] = {}
+		self._image_negative_cache: dict[int, float] = {}
 		self._cache_ttl_seconds: float = 600.0
 
 	async def __aenter__(self) -> "WBClient":
@@ -31,6 +32,7 @@ class WBClient:
 	async def _get_session(self) -> aiohttp.ClientSession:
 		if self._session is None or self._session.closed:
 			connector = aiohttp.TCPConnector(limit=50, limit_per_host=20, ttl_dns_cache=300)
+			# total timeout побольше для API, но не для картинок
 			timeout = aiohttp.ClientTimeout(total=8)
 			# trust_env=True позволит использовать системные/ENV прокси (HTTPS_PROXY)
 			self._session = aiohttp.ClientSession(timeout=timeout, connector=connector, trust_env=True)
@@ -125,21 +127,34 @@ class WBClient:
 		self._preview_cache[sku] = (name, image_url, page_url, exp)
 		return name, image_url, page_url
 
-	async def fetch_image_bytes(self, url: str) -> Optional[bytes]:
+	async def fetch_image_bytes(self, url: str, *, total_timeout: float = 3.0, attempts: int = 2) -> Optional[bytes]:
 		try:
 			session = await self._get_session()
 			headers = {"User-Agent": _headers("pc")["User-Agent"], "Referer": "https://www.wildberries.ru/"}
+			# короткий таймаут только для картинки
+			timeout = aiohttp.ClientTimeout(total=total_timeout)
 			async def do_request() -> Any:
-				return await session.get(url, headers=headers)
-			async with await self._with_retries(do_request) as resp:
-				if resp.status == 200:
-					return await resp.read()
+				return await session.get(url, headers=headers, timeout=timeout)
+			for i in range(attempts):
+				try:
+					async with await do_request() as resp:
+						if resp.status == 200:
+							return await resp.read()
+				except Exception as exc:  # noqa: BLE001
+					if i == attempts - 1:
+						logger.debug(f"WB image fetch failed: {exc}")
+						break
+					await asyncio.sleep(0.2 * (2 ** i))
 		except Exception as exc:  # noqa: BLE001
 			logger.debug(f"WB image fetch failed: {exc}")
 		return None
 
 	async def fetch_image_bytes_for_sku(self, sku: int) -> Optional[bytes]:
 		now = time.time()
+		# негативный кэш, чтобы не пытаться регулярно в TTL
+		neg_exp = self._image_negative_cache.get(sku)
+		if neg_exp and neg_exp > now:
+			return None
 		cached = self._image_cache.get(sku)
 		if cached and cached[1] > now:
 			return cached[0]
@@ -149,6 +164,8 @@ class WBClient:
 			if data:
 				self._image_cache[sku] = (data, now + self._cache_ttl_seconds)
 				return data
+		# негативный кэш на 5 минут
+		self._image_negative_cache[sku] = now + 300
 		return None
 
 

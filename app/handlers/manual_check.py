@@ -16,9 +16,9 @@ router = Router()
 def _manual_kb(articles: list[Article]) -> InlineKeyboardBuilder:
 	kb = InlineKeyboardBuilder()
 	for a in articles:
-		kb.button(text=str(a.sku), callback_data=f"manual:one:{a.id}")
-	kb.button(text="Все артикулы", callback_data="manual:all")
-	kb.button(text="Назад", callback_data="menu:back")
+		kb.button(text=f"📦 {a.sku}", callback_data=f"manual:one:{a.id}")
+	kb.button(text="🧾 Все артикулы", callback_data="manual:all")
+	kb.button(text="⬅️ Назад", callback_data="menu:back")
 	kb.adjust(2, 1, 1)
 	return kb
 
@@ -32,6 +32,12 @@ async def _ensure_user_by_id(telegram_id: int) -> User:
 			await session.commit()
 			await session.refresh(user)
 		return user
+
+
+def _status_suffix(user: User) -> str:
+	aut = "Включено" if user.auto_update_enabled else "Отключено"
+	region = user.region_city or user.region_district or "Не выбран"
+	return f"\n\n⚙️ Устройство: <b>{user.device}</b> | 🗺️ Регион: <b>{region}</b> | 🔁 Автообновление: <b>{aut}</b>"
 
 
 async def _get_positions_for_phrases(client: WBClient, *, sku: int, device: str, dest: int, phrases: list[str], semaphore: asyncio.Semaphore) -> list[tuple[str, int | None]]:
@@ -66,12 +72,12 @@ async def check_one(cb: CallbackQuery) -> None:
 	await cb.answer("Проверяю...", show_alert=False)
 	article_id = int(cb.data.split(":")[-1])
 	async with async_session_factory() as session:
-		row = await session.execute(select(Article.sku, User.device, User.dest_code).join(User, Article.user_id == User.id).where(Article.id == article_id, User.telegram_id == cb.from_user.id))
+		row = await session.execute(select(Article.sku, User.device, User.dest_code, User.auto_update_enabled, User.region_city, User.region_district).join(User, Article.user_id == User.id).where(Article.id == article_id, User.telegram_id == cb.from_user.id))
 		res = row.first()
 		if not res:
 			await cb.message.edit_text("Не найдено")
 			return
-		sku, device, dest = res
+		sku, device, dest, auto_update_enabled, region_city, region_district = res
 		phrases = list((await session.scalars(select(Tracking.phrase).where(Tracking.article_id == article_id))).all())
 	async with WBClient() as client:
 		name, _, page_url = await client.get_product_preview(sku=sku, device=device, dest=dest or -1257786)
@@ -85,8 +91,19 @@ async def check_one(cb: CallbackQuery) -> None:
 			except Exception:
 				pass
 		lines = [f"{phrase}: {pos if pos is not None else '—'}" for phrase, pos in results]
-		caption = (name or f"Артикул {sku}") + f"\n" + "\n".join(lines) + f"\n\nСсылка: {page_url}"
+		region = region_city or region_district or "Не выбран"
+		status = f"\n\n⚙️ Устройство: <b>{device}</b> | 🗺️ Регион: <b>{region}</b> | 🔁 Автообновление: <b>{'Включено' if auto_update_enabled else 'Отключено'}</b>"
+		caption = (name or f"Артикул {sku}") + f"\n" + "\n".join(lines) + f"\n\nСсылка: {page_url}" + status
+		# сначала текст
+		msg = await cb.message.answer(caption)
+		# пробуем быстро подгрузить картинку отдельно, без долгих ожиданий
 		img_bytes = await client.fetch_image_bytes_for_sku(sku)
+		if img_bytes:
+			try:
+				await msg.delete()
+			except Exception:
+				pass
+			await cb.message.answer_photo(photo=img_bytes, caption=caption)
 	try:
 		await cb.message.delete()
 	except Exception:
@@ -95,10 +112,6 @@ async def check_one(cb: CallbackQuery) -> None:
 		await progress.delete()
 	except Exception:
 		pass
-	if img_bytes:
-		await cb.message.answer_photo(photo=img_bytes, caption=caption)
-	else:
-		await cb.message.answer(caption)
 	await cb.message.answer("Все позиции найдены")
 
 
@@ -112,6 +125,7 @@ async def check_all(cb: CallbackQuery) -> None:
 		)).all())
 		device = user.device
 		dest = user.dest_code or -1257786
+		region = user.region_city or user.region_district or "Не выбран"
 	sku_to_phrases: dict[int, list[str]] = {}
 	for sku, phrase in rows:
 		sku_to_phrases.setdefault(int(sku), []).append(phrase)
@@ -128,12 +142,17 @@ async def check_all(cb: CallbackQuery) -> None:
 			name, _, page_url = await client.get_product_preview(sku=sku, device=device, dest=dest)
 			pairs = await _get_positions_for_phrases(client, sku=sku, device=device, dest=dest, phrases=phrases, semaphore=sem)
 			lines = [f"- {phrase}: {pos if pos is not None else '—'}" for phrase, pos in pairs]
-			caption = f"{sku} — {name or ''}\n" + "\n".join(lines) + f"\nСсылка: {page_url}"
+			status = f"\n\n⚙️ Устройство: <b>{device}</b> | 🗺️ Регион: <b>{region}</b> | 🔁 Автообновление: <b>{'Включено' if user.auto_update_enabled else 'Отключено'}</b>"
+			caption = f"{sku} — {name or ''}\n" + "\n".join(lines) + f"\nСсылка: {page_url}" + status
+			# сначала текст
+			msg = await cb.message.answer(caption)
 			img_bytes = await client.fetch_image_bytes_for_sku(sku)
 			if img_bytes:
+				try:
+					await msg.delete()
+				except Exception:
+					pass
 				await cb.message.answer_photo(photo=img_bytes, caption=caption)
-			else:
-				await cb.message.answer(caption)
 			nonlocal processed
 			processed += 1
 			try:

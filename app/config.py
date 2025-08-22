@@ -20,5 +20,8 @@ class Settings(BaseSettings):
 	app_host: str = Field("0.0.0.0", env="APP_HOST")
 	app_port: int = Field(8080, env="PORT")
 
+	# External cron
+	cron_secret: str | None = Field(None, env="CRON_SECRET")
+
 
 settings = Settings()
