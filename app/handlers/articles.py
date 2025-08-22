@@ -38,7 +38,7 @@ async def _ensure_user_by_id(telegram_id: int) -> User:
 		return user
 
 
-@router.message(F.text == "Артикулы")
+@router.message(F.text.endswith("Артикулы"))
 async def open_articles_by_text(message: Message) -> None:
 	user = await _ensure_user_by_id(message.from_user.id)
 	async with async_session_factory() as session:

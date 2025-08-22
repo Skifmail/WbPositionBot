@@ -22,7 +22,7 @@ def _settings_kb(user: User) -> InlineKeyboardBuilder:
 	return kb
 
 
-@router.message(F.text == "Настройки")
+@router.message(F.text.endswith("Настройки"))
 async def open_settings_by_text(message: Message) -> None:
 	async with async_session_factory() as session:
 		user = await session.scalar(select(User).where(User.telegram_id == message.from_user.id))

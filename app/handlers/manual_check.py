@@ -48,7 +48,7 @@ async def _get_positions_for_phrases(client: WBClient, *, sku: int, device: str,
 	return await asyncio.gather(*(one(p) for p in phrases))
 
 
-@router.message(F.text == "Проверить позиции")
+@router.message(F.text.endswith("Проверить позиции"))
 async def open_manual_by_text(message: Message) -> None:
 	user = await _ensure_user_by_id(message.from_user.id)
 	async with async_session_factory() as session:
