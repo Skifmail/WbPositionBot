@@ -10,29 +10,30 @@ from sqlalchemy.orm import declarative_base
 from app.config import settings
 
 
+_ALLOWED_SSLMODE = {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
+
+
 def _normalize_async_url(url: str) -> str:
 	# Convert postgres:// to postgresql:// and enforce asyncpg driver
 	if url.startswith("postgres://"):
 		url = "postgresql://" + url[len("postgres://"):]
 	if url.startswith("postgresql://") and "+asyncpg" not in url:
 		url = "postgresql+asyncpg://" + url[len("postgresql://"):]
-	# Rewrite/strip params incompatible with asyncpg
+	# Rewrite query params for asyncpg
 	parts = urlparse(url)
 	qs = dict(parse_qsl(parts.query, keep_blank_values=True))
-	# Map sslmode=require -> ssl=true
-	if "sslmode" in qs:
-		if qs.get("sslmode", "").lower() in {"require", "required", "verify-full", "verify_ca", "verify-full"}:
-			qs["ssl"] = "true"
-		qs.pop("sslmode", None)
-	# Drop psycopg/psql-specific params
-	for key in ["channel_binding", "target_session_attrs"]:
+	# Drop unsupported/psql-specific params
+	for key in ["channel_binding", "target_session_attrs", "ssl"]:
 		qs.pop(key, None)
-	# For Neon ensure ssl=true
-	if parts.hostname and parts.hostname.endswith("neon.tech") and "ssl" not in qs:
-		qs["ssl"] = "true"
+	# Enforce sslmode=require (Neon requires TLS). Fix invalid values.
+	host = parts.hostname or ""
+	if "sslmode" not in qs or qs.get("sslmode", "").lower() not in _ALLOWED_SSLMODE:
+		qs["sslmode"] = "require"
+	# Neon host: ensure require
+	if host.endswith("neon.tech"):
+		qs["sslmode"] = "require"
 	new_query = urlencode(qs)
-	url = urlunparse((parts.scheme, parts.netloc, parts.path, parts.params, new_query, parts.fragment))
-	return url
+	return urlunparse((parts.scheme, parts.netloc, parts.path, parts.params, new_query, parts.fragment))
 
 
 Base = declarative_base()
