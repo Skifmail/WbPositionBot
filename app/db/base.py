@@ -11,6 +11,8 @@ from app.config import settings
 
 
 Base = declarative_base()
+if not settings.database_url:
+	raise RuntimeError("DATABASE_URL не задан. Установите переменную окружения или настройте Render DATABASE_URL.")
 engine = create_async_engine(settings.database_url, echo=False, pool_pre_ping=True)
 async_session_factory = async_sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
 
