@@ -206,9 +206,6 @@ WbPositionBot/
 ├── scripts/
 │   ├── fetch_dest.py       # Получение dest кода
 │   └── reset_db.py         # Сброс БД
-├── tests/
-│   ├── test_device_map.py
-│   └── test_regions.py
 ├── bot.py                  # Точка входа
 ├── requirements.txt        # Зависимости
 ├── runtime.txt             # Версия Python
