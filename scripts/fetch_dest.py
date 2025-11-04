@@ -1,3 +1,5 @@
+"""Утилита для получения dest-кода региона Wildberries по координатам."""
+
 from __future__ import annotations
 
 import asyncio
@@ -10,28 +12,41 @@ URL = "https://user-geo-data.wildberries.ru/get-geo-info"
 
 
 async def fetch_dest(latitude: float, longitude: float, address: str) -> int | None:
-	params = {"latitude": latitude, "longitude": longitude, "address": address}
-	async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20)) as session:
-		async with session.get(URL, params=params) as resp:
-			resp.raise_for_status()
-			data: dict[str, Any] = await resp.json(content_type=None)
-			xinfo = data.get("xinfo", "")
-			for part in str(xinfo).split("&"):
-				if part.startswith("dest="):
-					return int(part.split("=", 1)[1])
-	return None
+    """Получает dest-код региона из API Wildberries.
+
+    Args:
+        latitude: Широта.
+        longitude: Долгота.
+        address: Адрес (город, регион).
+
+    Returns:
+        dest-код региона или None при ошибках.
+    """
+    params = {"latitude": latitude, "longitude": longitude, "address": address}
+    async with aiohttp.ClientSession(
+        timeout=aiohttp.ClientTimeout(total=20)
+    ) as session:
+        async with session.get(URL, params=params) as resp:
+            resp.raise_for_status()
+            data: dict[str, Any] = await resp.json(content_type=None)
+            xinfo = data.get("xinfo", "")
+            for part in str(xinfo).split("&"):
+                if part.startswith("dest="):
+                    return int(part.split("=", 1)[1])
+    return None
 
 
 async def main() -> None:
-	if len(sys.argv) < 4:
-		print("Usage: python scripts/fetch_dest.py <lat> <lon> <address>")
-		return
-	lat = float(sys.argv[1])
-	lon = float(sys.argv[2])
-	addr = " ".join(sys.argv[3:])
-	dest = await fetch_dest(lat, lon, addr)
-	print(dest)
+    """Запускает скрипт из CLI с аргументами lat, lon, address."""
+    if len(sys.argv) < 4:
+        print("Usage: python scripts/fetch_dest.py <lat> <lon> <address>")
+        return
+    lat = float(sys.argv[1])
+    lon = float(sys.argv[2])
+    addr = " ".join(sys.argv[3:])
+    dest = await fetch_dest(lat, lon, addr)
+    print(dest)
 
 
 if __name__ == "__main__":
-	asyncio.run(main())
+    asyncio.run(main())

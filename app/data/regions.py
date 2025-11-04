@@ -1,3 +1,9 @@
+"""Справочник регионов и городов России с кодами Wildberries.
+
+Содержит структурированные данные о федеральных округах и городах России
+с соответствующими кодами dest для API Wildberries.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,19 +11,36 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class City:
-	name: str
-	code: str
-	dest: int
+    """Город с кодом dest для API Wildberries.
+
+    Attributes:
+        name: Название города.
+        code: Уникальный код города (для внутреннего использования).
+        dest: Код региона Wildberries для API запросов.
+    """
+
+    name: str
+    code: str
+    dest: int
 
 
 @dataclass(frozen=True)
 class District:
-	name: str
-	code: str
-	cities: list[City]
+    """Федеральный округ РФ с городами.
+
+    Attributes:
+        name: Название федерального округа.
+        code: Уникальный код округа.
+        cities: Список городов в округе.
+    """
+
+    name: str
+    code: str
+    cities: list[City]
 
 
-# Note: dest codes should be obtained programmatically via WB geo API. For now include popular cities.
+# Примечание: dest коды можно получать программно через WB geo API.
+# Пока используем популярные города с заранее известными кодами.
 DISTRICTS: list[District] = [
 	District(
 		name="Центральный",

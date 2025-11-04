@@ -1262,3 +1262,30 @@
 2025-08-20 18:44:15.296 | INFO     | __main__:main:35 - Shutdown signal received
 2025-08-20 18:44:15.297 | INFO     | app.scheduler:shutdown_scheduler:32 - Scheduler stopped
 2025-08-20 18:44:15.298 | INFO     | __main__:main:42 - Bot stopped
+2025-11-04 13:24:49.536 | INFO     | __main__:run_webhook_server:263 - Запуск webhook сервера на 0.0.0.0:8080 (путь: /webhook)
+2025-11-04 13:24:54.539 | INFO     | app.scheduler:setup_scheduler:50 - Планировщик запущен: задача отслеживания каждые 10 минут
+2025-11-04 13:24:55.126 | INFO     | __main__:on_startup:165 - Webhook установлен: https://wbpositionbot.onrender.com/webhook
+2025-11-04 13:26:38.471 | INFO     | app.scheduler:shutdown_scheduler:67 - Планировщик остановлен
+2025-11-04 13:26:39.570 | INFO     | __main__:on_cleanup:186 - Бот остановлен
+2025-11-04 13:27:10.476 | INFO     | __main__:run_webhook_server:263 - Запуск webhook сервера на 0.0.0.0:8080 (путь: /webhook)
+2025-11-04 13:27:15.323 | INFO     | __main__:on_startup:165 - Webhook установлен: https://wbpositionbot.onrender.com/webhook
+2025-11-04 13:28:52.843 | INFO     | __main__:on_cleanup:186 - Бот остановлен
+2025-11-04 13:29:08.263 | INFO     | __main__:run_webhook_server:263 - Запуск webhook сервера на 0.0.0.0:8080 (путь: /webhook)
+2025-11-04 13:29:12.583 | INFO     | app.scheduler:setup_scheduler:50 - Планировщик запущен: задача отслеживания каждые 10 минут
+2025-11-04 13:29:13.158 | INFO     | __main__:on_startup:165 - Webhook установлен: https://wbpositionbot.onrender.com/webhook
+2025-11-04 13:29:56.335 | INFO     | app.scheduler:shutdown_scheduler:67 - Планировщик остановлен
+2025-11-04 13:29:57.133 | INFO     | __main__:on_cleanup:186 - Бот остановлен
+2025-11-04 13:30:23.351 | INFO     | __main__:run_webhook_server:263 - Запуск webhook сервера на 0.0.0.0:8080 (путь: /webhook)
+2025-11-04 13:30:28.191 | INFO     | app.scheduler:setup_scheduler:50 - Планировщик запущен: задача отслеживания каждые 10 минут
+2025-11-04 13:30:28.625 | INFO     | __main__:on_startup:165 - Webhook установлен: https://wbpositionbot.onrender.com/webhook
+2025-11-04 13:31:34.938 | INFO     | app.scheduler:shutdown_scheduler:67 - Планировщик остановлен
+2025-11-04 13:31:35.781 | INFO     | __main__:on_cleanup:186 - Бот остановлен
+2025-11-04 13:32:36.918 | INFO     | app.scheduler:setup_scheduler:50 - Планировщик запущен: задача отслеживания каждые 10 минут
+2025-11-04 13:32:36.919 | INFO     | __main__:start_polling_mode:121 - Запуск бота в режиме polling
+2025-11-04 13:33:46.814 | DEBUG    | app.services.wb_client:fetch_page:182 - Поиск WB страница 1 'Юбка' занял 0.71с
+2025-11-04 13:33:46.820 | DEBUG    | app.services.wb_client:fetch_page:182 - Поиск WB страница 2 'Поатье' занял 0.72с
+2025-11-04 13:33:46.821 | DEBUG    | app.services.wb_client:fetch_page:182 - Поиск WB страница 2 'Юбка' занял 0.72с
+2025-11-04 13:33:46.949 | DEBUG    | app.services.wb_client:fetch_page:182 - Поиск WB страница 1 'Поатье' занял 0.86с
+2025-11-04 13:34:41.348 | INFO     | __main__:start_polling_mode:125 - Получен сигнал остановки
+2025-11-04 13:34:41.349 | INFO     | app.scheduler:shutdown_scheduler:67 - Планировщик остановлен
+2025-11-04 13:34:41.349 | INFO     | __main__:start_polling_mode:132 - Бот остановлен
